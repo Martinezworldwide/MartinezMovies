@@ -64,14 +64,36 @@ async function applyFilters() {
     const services = [...document.querySelectorAll("#streamingServices input:checked")].map(s => s.value);
 
     let url = `https://${apiHost}/shows/search/filters?series_granularity=show&order_by=original_title&show_type=${type}&output_language=${language}`;
-    if (genres.length) url += `&genres=${genres.join(",")}`;
-    if (services.length) url += `&streamingServices=${services.join(",")}`;
-    
-    const response = await fetch(url, getHeaders());
-    const data = await response.json();
-    
-    displayMovies(data.result);
+
+    if (genres.length) url += `&genres=${genres.join(",")}&genres_relation=and`;
+    if (services.length) url += `&services=${services.join(",")}`;
+    if (yearFrom && yearTo) url += `&release_year_from=${yearFrom}&release_year_to=${yearTo}`;
+
+    console.log("API Request URL:", url); // Debugging
+
+    try {
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                "X-RapidAPI-Key": apiKey,
+                "X-RapidAPI-Host": apiHost
+            }
+        });
+
+        const data = await response.json();
+        console.log("API Response:", data); // Debugging
+
+        if (data && data.result && data.result.length > 0) {
+            displayMovies(data.result);
+        } else {
+            document.getElementById("movies-container").innerHTML = "<p>No movies found. Try adjusting filters!</p>";
+        }
+    } catch (error) {
+        console.error("Error fetching movies:", error);
+        document.getElementById("movies-container").innerHTML = "<p>Failed to load movies. Check console for errors.</p>";
+    }
 }
+
 
 // Display Movies
 function displayMovies(movies) {
