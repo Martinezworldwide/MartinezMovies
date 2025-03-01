@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Martinez Movies - Lifestyle Shops</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Martinez Movies</h1>
+        <p>Discover the best movies and TV shows available on streaming platforms</p>
+        <input type="text" id="search" placeholder="Search for a movie or TV show...">
+        <button onclick="searchMovies()">Search</button>
+    </header>
+    
+    <nav>
+        <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#recommendations">Recommendations</a></li>
+            <li><a href="#watchlist">Watchlist</a></li>
+        </ul>
+    </nav>
+    
+    <section id="recommendations">
+        <h2>Recommended for You</h2>
+        <div id="movies-list"></div>
+    </section>
+    
+    <section id="watchlist">
+        <h2>Your Watchlist</h2>
+        <ul id="watchlist-items"></ul>
+    </section>
+    
+    <footer>
+        <p>&copy; 2025 Martinez Movies | Part of Martinez Lifestyle Shops</p>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>
