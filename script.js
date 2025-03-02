@@ -1,7 +1,7 @@
 // Martinez Movies - JavaScript
 const apiKey = "6264585815mshaaa60564d43dd2ap132e53jsn11ef0791b6f8";
 const apiHost = "streaming-availability.p.rapidapi.com";
-const countryCode = "us"; // Specify country code, e.g., "us" for the United States
+const country = "us"; // Set the country parameter (required by API)
 
 // Populate dropdowns on page load
 document.addEventListener("DOMContentLoaded", () => {
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadStreamingServices();
 });
 
-// Populate Year Dropdowns
+// Populate release year dropdowns
 function populateYears() {
     const yearFrom = document.getElementById("yearFrom");
     const yearTo = document.getElementById("yearTo");
@@ -25,14 +25,16 @@ function populateYears() {
     yearTo.value = currentYear;
 }
 
-// Load Genres
+// Load Genres from API
 async function loadGenres() {
-    try {
-        const url = `https://${apiHost}/genres?output_language=en`;
-        const response = await fetch(url, getHeaders());
-        const data = await response.json();
+    const url = `https://${apiHost}/genres?output_language=en`;
 
-        if (!data.result) throw new Error("Genres API did not return expected results.");
+    try {
+        const response = await fetch(url, getHeaders());
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+        const data = await response.json();
+        if (!data || !data.result) throw new Error("No genres returned from API");
 
         const genresDiv = document.getElementById("genres");
         data.result.forEach(genre => {
@@ -43,6 +45,7 @@ async function loadGenres() {
         });
     } catch (error) {
         console.error("Error loading genres:", error);
+        document.getElementById("genres").textContent = "Failed to load genres.";
     }
 }
 
@@ -71,7 +74,7 @@ async function applyFilters() {
     const genres = [...document.querySelectorAll("#genres .selected")].map(g => g.textContent);
     const services = [...document.querySelectorAll("#streamingServices input:checked")].map(s => s.value);
 
-    let url = `https://${apiHost}/shows/search/filters?series_granularity=show&order_by=original_title&show_type=${type}&output_language=${language}&country=${countryCode}`;
+    let url = `https://${apiHost}/shows/search/filters?series_granularity=show&order_by=original_title&show_type=${type}&output_language=${language}&country=${country}`;
 
     if (genres.length) url += `&genres=${genres.join(",")}&genres_relation=and`;
     if (services.length) url += `&services=${services.join(",")}`;
@@ -88,7 +91,7 @@ async function applyFilters() {
             }
         });
 
-        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
         const data = await response.json();
         console.log("API Response:", data); // Debugging
@@ -108,7 +111,7 @@ async function applyFilters() {
 function displayMovies(movies) {
     const container = document.getElementById("movies-container");
     container.innerHTML = "";
-    
+
     movies.forEach(movie => {
         const movieCard = document.createElement("div");
         movieCard.classList.add("movie-card");
@@ -121,7 +124,7 @@ function displayMovies(movies) {
     });
 }
 
-// Headers
+// Headers for API Requests
 function getHeaders() {
     return {
         method: "GET",
@@ -131,5 +134,6 @@ function getHeaders() {
         }
     };
 }
+
 
 
