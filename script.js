@@ -9,44 +9,44 @@ document.addEventListener("DOMContentLoaded", () => {
     loadStreamingServices();
 });
 
+// Populate years
 function populateYears() {
     const yearFrom = document.getElementById("yearFrom");
     const yearTo = document.getElementById("yearTo");
     const currentYear = new Date().getFullYear();
 
     for (let year = 1970; year <= currentYear; year++) {
-        let optionFrom = new Option(year, year);
-        let optionTo = new Option(year, year);
-        yearFrom.add(optionFrom);
-        yearTo.add(optionTo);
+        yearFrom.add(new Option(year, year));
+        yearTo.add(new Option(year, year));
     }
     yearTo.value = currentYear;
 }
 
-// Load Genres
+// Load Genres (Fixed API Call)
 async function loadGenres() {
-    const url = `https://${apiHost}/genres?output_language=en`;
-    
     try {
+        const url = `https://${apiHost}/genres?output_language=en`;
         const response = await fetch(url, getHeaders());
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch genres: ${response.status}`);
+        }
+
         const data = await response.json();
-    
+        if (!data.result) {
+            throw new Error("Genres API did not return expected results.");
+        }
+
         const genresDiv = document.getElementById("genres");
         data.result.forEach(genre => {
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.value = genre.id;
-            checkbox.id = `genre-${genre.id}`;
-
-            const label = document.createElement("label");
-            label.htmlFor = checkbox.id;
-            label.textContent = genre.name;
-
-            genresDiv.appendChild(checkbox);
-            genresDiv.appendChild(label);
+            const btn = document.createElement("button");
+            btn.textContent = genre.name;
+            btn.onclick = () => btn.classList.toggle("selected");
+            genresDiv.appendChild(btn);
         });
+
     } catch (error) {
-        console.error("Failed to load genres:", error);
+        console.error("Error loading genres:", error);
     }
 }
 
@@ -72,16 +72,17 @@ async function applyFilters() {
     const yearFrom = document.getElementById("yearFrom").value;
     const yearTo = document.getElementById("yearTo").value;
     const language = document.getElementById("language").value;
-    const genres = [...document.querySelectorAll("#genres input:checked")].map(g => g.value);
+    const genres = [...document.querySelectorAll("#genres .selected")].map(g => g.textContent);
     const services = [...document.querySelectorAll("#streamingServices input:checked")].map(s => s.value);
 
+    // Correcting API URL Structure
     let url = `https://${apiHost}/shows/search/filters?series_granularity=show&order_by=original_title&show_type=${type}&output_language=${language}`;
 
-    if (genres.length) url += `&genres=${genres.join(",")}&genres_relation=and`;
-    if (services.length) url += `&services=${services.join(",")}`;
+    if (genres.length > 0) url += `&genres=${encodeURIComponent(genres.join(","))}&genres_relation=and`;
+    if (services.length > 0) url += `&services=${encodeURIComponent(services.join(","))}`;
     if (yearFrom && yearTo) url += `&release_year_from=${yearFrom}&release_year_to=${yearTo}`;
 
-    console.log("API Request URL:", url); // Debugging
+    console.log("API Request URL:", url);
 
     try {
         const response = await fetch(url, {
@@ -93,9 +94,9 @@ async function applyFilters() {
         });
 
         const data = await response.json();
-        console.log("API Response:", data); // Debugging
+        console.log("API Response:", data);
 
-        if (data && data.result && data.result.length > 0) {
+        if (data.result && data.result.length > 0) {
             displayMovies(data.result);
         } else {
             document.getElementById("movies-container").innerHTML = "<p>No movies found. Try adjusting filters!</p>";
@@ -106,7 +107,7 @@ async function applyFilters() {
     }
 }
 
-// Display Movies
+// Display Movies (Fix Poster Path)
 function displayMovies(movies) {
     const container = document.getElementById("movies-container");
     container.innerHTML = "";
@@ -115,7 +116,7 @@ function displayMovies(movies) {
         const movieCard = document.createElement("div");
         movieCard.classList.add("movie-card");
         movieCard.innerHTML = `
-            <img src="${movie.poster_path}" alt="${movie.title}">
+            <img src="${movie.poster_path || 'placeholder.jpg'}" alt="${movie.title}">
             <h3>${movie.title}</h3>
             <button onclick="addToWatchlist('${movie.id}', '${movie.title}', '${movie.poster_path}')">Add to Watchlist</button>
         `;
@@ -123,7 +124,7 @@ function displayMovies(movies) {
     });
 }
 
-// Headers
+// Headers (Fixed Method)
 function getHeaders() {
     return {
         method: "GET",
@@ -133,5 +134,6 @@ function getHeaders() {
         }
     };
 }
+
 
 
