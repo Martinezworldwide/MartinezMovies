@@ -2,6 +2,7 @@
 const apiKey = "6264585815mshaaa60564d43dd2ap132e53jsn11ef0791b6f8";
 const apiHost = "streaming-availability.p.rapidapi.com";
 
+// Populate dropdowns
 document.addEventListener("DOMContentLoaded", () => {
     populateYears();
     loadGenres();
@@ -22,26 +23,34 @@ function populateYears() {
     yearTo.value = currentYear;
 }
 
+// Load Genres
 async function loadGenres() {
     const url = `https://${apiHost}/genres?output_language=en`;
     
     try {
         const response = await fetch(url, getHeaders());
         const data = await response.json();
-
+    
         const genresDiv = document.getElementById("genres");
         data.result.forEach(genre => {
-            const btn = document.createElement("button");
-            btn.textContent = genre.name;
-            btn.dataset.id = genre.id; 
-            btn.onclick = () => btn.classList.toggle("selected");
-            genresDiv.appendChild(btn);
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = genre.id;
+            checkbox.id = `genre-${genre.id}`;
+
+            const label = document.createElement("label");
+            label.htmlFor = checkbox.id;
+            label.textContent = genre.name;
+
+            genresDiv.appendChild(checkbox);
+            genresDiv.appendChild(label);
         });
     } catch (error) {
-        console.error("Error fetching genres:", error);
+        console.error("Failed to load genres:", error);
     }
 }
 
+// Load Streaming Services
 function loadStreamingServices() {
     const services = ["Netflix", "Hulu", "Disney+", "Prime Video", "HBO Max", "Apple TV+"];
     const servicesDiv = document.getElementById("streamingServices");
@@ -57,31 +66,64 @@ function loadStreamingServices() {
     });
 }
 
+// Fetch Movies Based on Filters
 async function applyFilters() {
     const type = document.getElementById("toggleType").checked ? "series" : "movie";
     const yearFrom = document.getElementById("yearFrom").value;
     const yearTo = document.getElementById("yearTo").value;
     const language = document.getElementById("language").value;
-    
-    const genres = [...document.querySelectorAll("#genres .selected")].map(g => g.dataset.id);
+    const genres = [...document.querySelectorAll("#genres input:checked")].map(g => g.value);
     const services = [...document.querySelectorAll("#streamingServices input:checked")].map(s => s.value);
 
-    let url = `https://${apiHost}/shows/search/filters?series_granularity=show&order_by=original_title&order_direction=asc&show_type=${type}&output_language=en`;
+    let url = `https://${apiHost}/shows/search/filters?series_granularity=show&order_by=original_title&show_type=${type}&output_language=${language}`;
 
     if (genres.length) url += `&genres=${genres.join(",")}&genres_relation=and`;
     if (services.length) url += `&services=${services.join(",")}`;
     if (yearFrom && yearTo) url += `&release_year_from=${yearFrom}&release_year_to=${yearTo}`;
-    if (language) url += `&language=${language}`;
+
+    console.log("API Request URL:", url); // Debugging
 
     try {
-        const response = await fetch(url, getHeaders());
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                "X-RapidAPI-Key": apiKey,
+                "X-RapidAPI-Host": apiHost
+            }
+        });
+
         const data = await response.json();
-        displayMovies(data.result);
+        console.log("API Response:", data); // Debugging
+
+        if (data && data.result && data.result.length > 0) {
+            displayMovies(data.result);
+        } else {
+            document.getElementById("movies-container").innerHTML = "<p>No movies found. Try adjusting filters!</p>";
+        }
     } catch (error) {
         console.error("Error fetching movies:", error);
+        document.getElementById("movies-container").innerHTML = "<p>Failed to load movies. Check console for errors.</p>";
     }
 }
 
+// Display Movies
+function displayMovies(movies) {
+    const container = document.getElementById("movies-container");
+    container.innerHTML = "";
+    
+    movies.forEach(movie => {
+        const movieCard = document.createElement("div");
+        movieCard.classList.add("movie-card");
+        movieCard.innerHTML = `
+            <img src="${movie.poster_path}" alt="${movie.title}">
+            <h3>${movie.title}</h3>
+            <button onclick="addToWatchlist('${movie.id}', '${movie.title}', '${movie.poster_path}')">Add to Watchlist</button>
+        `;
+        container.appendChild(movieCard);
+    });
+}
+
+// Headers
 function getHeaders() {
     return {
         method: "GET",
