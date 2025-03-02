@@ -1,15 +1,16 @@
 // Martinez Movies - JavaScript
 const apiKey = "6264585815mshaaa60564d43dd2ap132e53jsn11ef0791b6f8";
 const apiHost = "streaming-availability.p.rapidapi.com";
+const countryCode = "us"; // Specify country code, e.g., "us" for the United States
 
-// Load filters when the page loads
+// Populate dropdowns on page load
 document.addEventListener("DOMContentLoaded", () => {
     populateYears();
     loadGenres();
     loadStreamingServices();
 });
 
-// ✅ Populate Release Year Dropdowns
+// Populate Year Dropdowns
 function populateYears() {
     const yearFrom = document.getElementById("yearFrom");
     const yearTo = document.getElementById("yearTo");
@@ -24,44 +25,28 @@ function populateYears() {
     yearTo.value = currentYear;
 }
 
-// ✅ Load Genres from API
+// Load Genres
 async function loadGenres() {
-    const url = `https://${apiHost}/genres?output_language=en`;
-
     try {
-        const response = await fetch(url, {
-            method: "GET",
-            headers: {
-                "X-RapidAPI-Key": apiKey,
-                "X-RapidAPI-Host": apiHost
-            }
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-
+        const url = `https://${apiHost}/genres?output_language=en`;
+        const response = await fetch(url, getHeaders());
         const data = await response.json();
-        console.log("Genres API Response:", data); // Debugging
 
-        if (!data.result || data.result.length === 0) {
-            throw new Error("No genres returned from API");
-        }
+        if (!data.result) throw new Error("Genres API did not return expected results.");
 
         const genresDiv = document.getElementById("genres");
         data.result.forEach(genre => {
             const btn = document.createElement("button");
             btn.textContent = genre.name;
-            btn.classList.add("genre-btn");
             btn.onclick = () => btn.classList.toggle("selected");
             genresDiv.appendChild(btn);
         });
-
     } catch (error) {
         console.error("Error loading genres:", error);
-        document.getElementById("genres").innerHTML = "<p>Failed to load genres.</p>";
     }
 }
 
-// ✅ Load Streaming Services
+// Load Streaming Services
 function loadStreamingServices() {
     const services = ["Netflix", "Hulu", "Disney+", "Prime Video", "HBO Max", "Apple TV+"];
     const servicesDiv = document.getElementById("streamingServices");
@@ -77,7 +62,7 @@ function loadStreamingServices() {
     });
 }
 
-// ✅ Fetch Movies Based on Filters
+// Fetch Movies Based on Filters
 async function applyFilters() {
     const type = document.getElementById("toggleType").checked ? "series" : "movie";
     const yearFrom = document.getElementById("yearFrom").value;
@@ -86,9 +71,9 @@ async function applyFilters() {
     const genres = [...document.querySelectorAll("#genres .selected")].map(g => g.textContent);
     const services = [...document.querySelectorAll("#streamingServices input:checked")].map(s => s.value);
 
-    let url = `https://${apiHost}/shows/search/filters?series_granularity=show&order_by=original_title&genres_relation=and&output_language=${language}&show_type=${type}`;
+    let url = `https://${apiHost}/shows/search/filters?series_granularity=show&order_by=original_title&show_type=${type}&output_language=${language}&country=${countryCode}`;
 
-    if (genres.length) url += `&genres=${genres.join(",")}`;
+    if (genres.length) url += `&genres=${genres.join(",")}&genres_relation=and`;
     if (services.length) url += `&services=${services.join(",")}`;
     if (yearFrom && yearTo) url += `&release_year_from=${yearFrom}&release_year_to=${yearTo}`;
 
@@ -103,12 +88,12 @@ async function applyFilters() {
             }
         });
 
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
 
         const data = await response.json();
         console.log("API Response:", data); // Debugging
 
-        if (data.result && data.result.length > 0) {
+        if (data && data.result && data.result.length > 0) {
             displayMovies(data.result);
         } else {
             document.getElementById("movies-container").innerHTML = "<p>No movies found. Try adjusting filters!</p>";
@@ -119,16 +104,16 @@ async function applyFilters() {
     }
 }
 
-// ✅ Display Movies
+// Display Movies
 function displayMovies(movies) {
     const container = document.getElementById("movies-container");
     container.innerHTML = "";
-
+    
     movies.forEach(movie => {
         const movieCard = document.createElement("div");
         movieCard.classList.add("movie-card");
         movieCard.innerHTML = `
-            <img src="${movie.poster_path || 'https://via.placeholder.com/200'}" alt="${movie.title}">
+            <img src="${movie.poster_path}" alt="${movie.title}">
             <h3>${movie.title}</h3>
             <button onclick="addToWatchlist('${movie.id}', '${movie.title}', '${movie.poster_path}')">Add to Watchlist</button>
         `;
@@ -136,15 +121,7 @@ function displayMovies(movies) {
     });
 }
 
-// ✅ Add to Watchlist
-function addToWatchlist(id, title, poster) {
-    let watchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-    watchlist.push({ id, title, poster });
-    localStorage.setItem("watchlist", JSON.stringify(watchlist));
-    alert(`${title} added to your watchlist!`);
-}
-
-// ✅ Headers for API Calls
+// Headers
 function getHeaders() {
     return {
         method: "GET",
