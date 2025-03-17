@@ -1,4 +1,5 @@
 const config = {
-    apiKey: "6264585815mshaaa60564d43dd2ap132e53jsn11ef0791b6f8",
-    apiHost: "streaming-availability.p.rapidapi.com"
+    apiKey: "YOUR_TMDB_API_KEY", // You'll need to get this from https://www.themoviedb.org/settings/api
+    baseUrl: "https://api.themoviedb.org/3",
+    imageBaseUrl: "https://image.tmdb.org/t/p/w500"
 }; 

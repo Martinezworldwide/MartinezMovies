@@ -1,34 +1,23 @@
 // Martinez Movies - JavaScript
-// Default URL with the required `country=us` query
-const baseUrl = `https://${config.apiHost}/shows/search/filters?country=us&series_granularity=show&order_direction=asc&order_by=original_title&genres_relation=and&output_language=en&show_type=movie`;
-
 // Fetch movies function
 async function fetchMovies() {
-    const type = document.getElementById("toggleType").checked ? "series" : "movie";
+    const type = document.getElementById("toggleType").checked ? "tv" : "movie";
     const yearFrom = document.getElementById("yearFrom").value;
     const yearTo = document.getElementById("yearTo").value;
     const language = document.getElementById("language").value;
-    const genres = [...document.querySelectorAll("#genres .selected")].map(g => g.textContent);
-    const services = [...document.querySelectorAll("#streamingServices input:checked")].map(s => s.value);
+    const genres = [...document.querySelectorAll("#genres .selected")].map(g => g.dataset.id);
+    const page = 1;
 
-    // Append user selections to base URL
-    let url = `${baseUrl}&show_type=${type}`;
-    if (genres.length) url += `&genres=${genres.join(",")}`;
-    if (services.length) url += `&services=${services.join(",")}`;
-    if (yearFrom && yearTo) url += `&release_year_from=${yearFrom}&release_year_to=${yearTo}`;
+    // Build the URL with filters
+    let url = `${config.baseUrl}/discover/${type}?api_key=${config.apiKey}&language=en-US&sort_by=popularity.desc&page=${page}`;
+    if (genres.length) url += `&with_genres=${genres.join(",")}`;
+    if (yearFrom && yearTo) url += `&primary_release_year.gte=${yearFrom}&primary_release_year.lte=${yearTo}`;
+    if (language !== "any") url += `&with_original_language=${language}`;
 
     console.log("API Request URL:", url); // Debugging
 
-    const options = {
-        method: "GET",
-        headers: {
-            "X-RapidAPI-Key": config.apiKey,
-            "X-RapidAPI-Host": config.apiHost
-        }
-    };
-
     try {
-        const response = await fetch(url, options);
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -36,8 +25,8 @@ async function fetchMovies() {
         const data = await response.json();
         console.log("Movies data:", data); // Debugging output
 
-        if (data.result && data.result.length > 0) {
-            displayMovies(data.result);
+        if (data.results && data.results.length > 0) {
+            displayMovies(data.results);
         } else {
             document.getElementById("movies-container").innerHTML = "<p>No movies found. Try adjusting filters!</p>";
         }
@@ -55,16 +44,19 @@ function displayMovies(movies) {
     movies.forEach(movie => {
         const movieCard = document.createElement("div");
         movieCard.classList.add("movie-card");
+        const posterPath = movie.poster_path ? `${config.imageBaseUrl}${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image';
+        const title = movie.title || movie.name;
+        const releaseDate = movie.release_date || movie.first_air_date;
+        const year = releaseDate ? releaseDate.split('-')[0] : 'N/A';
+
         movieCard.innerHTML = `
-            <img src="${movie.poster_path}" alt="${movie.title}">
-            <h3>${movie.title}</h3>
+            <img src="${posterPath}" alt="${title}">
+            <h3>${title} (${year})</h3>
             <p>${movie.overview || 'No description available'}</p>
-            <div class="streaming-services">
-                ${movie.streamingInfo ? Object.entries(movie.streamingInfo)
-                    .map(([service, info]) => `<span class="service">${service}</span>`)
-                    .join('') : 'Not available on any service'}
+            <div class="rating">
+                <span>⭐ ${movie.vote_average.toFixed(1)}</span>
             </div>
-            <button onclick="addToWatchlist('${movie.id}', '${movie.title}', '${movie.poster_path}')">Add to Watchlist</button>
+            <button onclick="addToWatchlist('${movie.id}', '${title}', '${posterPath}')">Add to Watchlist</button>
         `;
         container.appendChild(movieCard);
     });
@@ -72,17 +64,11 @@ function displayMovies(movies) {
 
 // Load genres when page loads
 async function loadGenres() {
-    const url = `https://${config.apiHost}/genres?output_language=en`;
+    const type = document.getElementById("toggleType").checked ? "tv" : "movie";
+    const url = `${config.baseUrl}/genre/${type}/list?api_key=${config.apiKey}&language=en-US`;
 
     try {
-        const response = await fetch(url, {
-            method: "GET",
-            headers: {
-                "X-RapidAPI-Key": config.apiKey,
-                "X-RapidAPI-Host": config.apiHost
-            }
-        });
-
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -90,14 +76,16 @@ async function loadGenres() {
         const data = await response.json();
         console.log("Genres data:", data); // Debugging
 
-        if (!data.result || data.result.length === 0) {
+        if (!data.genres || data.genres.length === 0) {
             throw new Error("No genres returned from API");
         }
 
         const genresDiv = document.getElementById("genres");
-        data.result.forEach(genre => {
+        genresDiv.innerHTML = ""; // Clear loading message
+        data.genres.forEach(genre => {
             const btn = document.createElement("button");
             btn.textContent = genre.name;
+            btn.dataset.id = genre.id;
             btn.onclick = () => btn.classList.toggle("selected");
             genresDiv.appendChild(btn);
         });
@@ -108,27 +96,15 @@ async function loadGenres() {
     }
 }
 
-// Populate streaming services
-function loadStreamingServices() {
-    const services = ["netflix", "hulu", "disney", "prime", "hbo", "apple"];
-    const servicesDiv = document.getElementById("streamingServices");
-
-    services.forEach(service => {
-        let label = document.createElement("label");
-        let checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.value = service;
-        label.appendChild(checkbox);
-        label.append(service.charAt(0).toUpperCase() + service.slice(1));
-        servicesDiv.appendChild(label);
-    });
-}
-
 // Populate year selects
 function populateYearSelects() {
     const currentYear = new Date().getFullYear();
     const yearFrom = document.getElementById("yearFrom");
     const yearTo = document.getElementById("yearTo");
+
+    // Clear loading messages
+    yearFrom.innerHTML = "";
+    yearTo.innerHTML = "";
 
     // Add years from 1900 to current year
     for (let year = currentYear; year >= 1900; year--) {
@@ -151,9 +127,9 @@ function populateYearSelects() {
 function searchMovies() {
     const searchTerm = document.getElementById("search").value;
     if (searchTerm) {
-        // Add search term to URL and fetch
-        const searchUrl = `${baseUrl}&title=${encodeURIComponent(searchTerm)}`;
-        fetchMovies(searchUrl);
+        const type = document.getElementById("toggleType").checked ? "tv" : "movie";
+        const url = `${config.baseUrl}/search/${type}?api_key=${config.apiKey}&language=en-US&query=${encodeURIComponent(searchTerm)}`;
+        fetchMovies(url);
     }
 }
 
@@ -162,10 +138,14 @@ function applyFilters() {
     fetchMovies();
 }
 
+// Handle type toggle
+document.getElementById("toggleType").addEventListener("change", () => {
+    loadGenres(); // Reload genres when switching between movies and TV shows
+});
+
 // Call necessary functions when page loads
 document.addEventListener("DOMContentLoaded", () => {
     loadGenres();
-    loadStreamingServices();
     populateYearSelects();
 });
 

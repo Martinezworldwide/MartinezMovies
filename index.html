@@ -9,7 +9,7 @@
 <body>
     <header>
         <h1>Martinez Movies</h1>
-        <p>Discover the best movies and TV shows available on streaming platforms</p>
+        <p>Discover the best movies and TV shows</p>
 
         <nav>
             <a href="#">About</a>
@@ -31,7 +31,7 @@
                     <input type="checkbox" id="toggleType">
                     <span class="slider round"></span>
                 </label>
-                <label>Series</label>
+                <label>TV Shows</label>
             </div>
 
             <div class="filter-group">
@@ -51,11 +51,6 @@
                     <option value="en">English</option>
                     <option value="es">Spanish</option>
                 </select>
-            </div>
-
-            <div class="filter-group">
-                <h3>Streaming Services</h3>
-                <div id="streamingServices">Loading services...</div>
             </div>
 
             <button class="apply-filters" onclick="applyFilters()">Get the List</button>
@@ -82,7 +77,6 @@
             console.log("DOM loaded, checking elements:");
             console.log("Genres div:", document.getElementById("genres"));
             console.log("Year selects:", document.getElementById("yearFrom"), document.getElementById("yearTo"));
-            console.log("Streaming services:", document.getElementById("streamingServices"));
         });
     </script>
 </body>
