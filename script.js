@@ -1,9 +1,11 @@
 // Martinez Movies - JavaScript
-const apiKey = "6264585815mshaaa60564d43dd2ap132e53jsn11ef0791b6f8";
-const apiHost = "streaming-availability.p.rapidapi.com";
+const config = {
+    apiKey: "6264585815mshaaa60564d43dd2ap132e53jsn11ef0791b6f8",
+    apiHost: "streaming-availability.p.rapidapi.com"
+};
 
 // Default URL with the required `country=us` query
-const baseUrl = `https://${apiHost}/shows/search/filters?country=us&series_granularity=show&order_direction=asc&order_by=original_title&genres_relation=and&output_language=en&show_type=movie`;
+const baseUrl = `https://${config.apiHost}/shows/search/filters?country=us&series_granularity=show&order_direction=asc&order_by=original_title&genres_relation=and&output_language=en&show_type=movie`;
 
 // Fetch movies function
 async function fetchMovies() {
@@ -25,9 +27,11 @@ async function fetchMovies() {
     const options = {
         method: "GET",
         headers: {
-            "X-RapidAPI-Key": apiKey,
-            "X-RapidAPI-Host": apiHost
-        }
+            "X-RapidAPI-Key": config.apiKey,
+            "X-RapidAPI-Host": config.apiHost,
+            "Access-Control-Allow-Origin": "*"
+        },
+        mode: "cors"
     };
 
     try {
@@ -69,14 +73,14 @@ function displayMovies(movies) {
 
 // Load genres when page loads
 async function loadGenres() {
-    const url = `https://${apiHost}/genres?output_language=en`;
+    const url = `https://${config.apiHost}/genres?output_language=en`;
 
     try {
         const response = await fetch(url, {
             method: "GET",
             headers: {
-                "X-RapidAPI-Key": apiKey,
-                "X-RapidAPI-Host": apiHost
+                "X-RapidAPI-Key": config.apiKey,
+                "X-RapidAPI-Host": config.apiHost
             }
         });
 
@@ -120,5 +124,20 @@ document.addEventListener("DOMContentLoaded", () => {
     loadGenres();
     loadStreamingServices();
 });
+
+// Search movies function
+function searchMovies() {
+    const searchTerm = document.getElementById("search").value;
+    if (searchTerm) {
+        // Add search term to URL and fetch
+        const searchUrl = `${baseUrl}&title=${encodeURIComponent(searchTerm)}`;
+        fetchMovies(searchUrl);
+    }
+}
+
+// Apply filters function
+function applyFilters() {
+    fetchMovies();
+}
 
 
