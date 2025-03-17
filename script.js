@@ -131,11 +131,28 @@ function loadStreamingServices() {
     });
 }
 
-// Call necessary functions when page loads
-document.addEventListener("DOMContentLoaded", () => {
-    loadGenres();
-    loadStreamingServices();
-});
+// Populate year selects
+function populateYearSelects() {
+    const currentYear = new Date().getFullYear();
+    const yearFrom = document.getElementById("yearFrom");
+    const yearTo = document.getElementById("yearTo");
+
+    // Add years from 1900 to current year
+    for (let year = currentYear; year >= 1900; year--) {
+        const optionFrom = document.createElement("option");
+        const optionTo = document.createElement("option");
+        optionFrom.value = year;
+        optionTo.value = year;
+        optionFrom.textContent = year;
+        optionTo.textContent = year;
+        yearFrom.appendChild(optionFrom);
+        yearTo.appendChild(optionTo);
+    }
+
+    // Set default values (last 10 years)
+    yearFrom.value = currentYear - 10;
+    yearTo.value = currentYear;
+}
 
 // Search movies function
 function searchMovies() {
@@ -151,5 +168,12 @@ function searchMovies() {
 function applyFilters() {
     fetchMovies();
 }
+
+// Call necessary functions when page loads
+document.addEventListener("DOMContentLoaded", () => {
+    loadGenres();
+    loadStreamingServices();
+    populateYearSelects();
+});
 
 
