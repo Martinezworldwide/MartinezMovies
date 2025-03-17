@@ -65,6 +65,12 @@ function displayMovies(movies) {
         movieCard.innerHTML = `
             <img src="${movie.poster_path}" alt="${movie.title}">
             <h3>${movie.title}</h3>
+            <p>${movie.overview || 'No description available'}</p>
+            <div class="streaming-services">
+                ${movie.streamingInfo ? Object.entries(movie.streamingInfo)
+                    .map(([service, info]) => `<span class="service">${service}</span>`)
+                    .join('') : 'Not available on any service'}
+            </div>
             <button onclick="addToWatchlist('${movie.id}', '${movie.title}', '${movie.poster_path}')">Add to Watchlist</button>
         `;
         container.appendChild(movieCard);
@@ -84,7 +90,13 @@ async function loadGenres() {
             }
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
         const data = await response.json();
+        console.log("Genres data:", data); // Debugging
+
         if (!data.result || data.result.length === 0) {
             throw new Error("No genres returned from API");
         }
@@ -105,7 +117,7 @@ async function loadGenres() {
 
 // Populate streaming services
 function loadStreamingServices() {
-    const services = ["Netflix", "Hulu", "Disney+", "Prime Video", "HBO Max", "Apple TV+"];
+    const services = ["netflix", "hulu", "disney", "prime", "hbo", "apple"];
     const servicesDiv = document.getElementById("streamingServices");
 
     services.forEach(service => {
@@ -114,7 +126,7 @@ function loadStreamingServices() {
         checkbox.type = "checkbox";
         checkbox.value = service;
         label.appendChild(checkbox);
-        label.append(service);
+        label.append(service.charAt(0).toUpperCase() + service.slice(1));
         servicesDiv.appendChild(label);
     });
 }
