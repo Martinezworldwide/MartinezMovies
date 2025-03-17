@@ -1,9 +1,4 @@
 // Martinez Movies - JavaScript
-const config = {
-    apiKey: "6264585815mshaaa60564d43dd2ap132e53jsn11ef0791b6f8",
-    apiHost: "streaming-availability.p.rapidapi.com"
-};
-
 // Default URL with the required `country=us` query
 const baseUrl = `https://${config.apiHost}/shows/search/filters?country=us&series_granularity=show&order_direction=asc&order_by=original_title&genres_relation=and&output_language=en&show_type=movie`;
 
@@ -28,10 +23,8 @@ async function fetchMovies() {
         method: "GET",
         headers: {
             "X-RapidAPI-Key": config.apiKey,
-            "X-RapidAPI-Host": config.apiHost,
-            "Access-Control-Allow-Origin": "*"
-        },
-        mode: "cors"
+            "X-RapidAPI-Host": config.apiHost
+        }
     };
 
     try {
@@ -41,7 +34,7 @@ async function fetchMovies() {
         }
 
         const data = await response.json();
-        console.log(data); // Debugging output
+        console.log("Movies data:", data); // Debugging output
 
         if (data.result && data.result.length > 0) {
             displayMovies(data.result);

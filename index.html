@@ -36,12 +36,12 @@
 
             <div class="filter-group">
                 <h3>Genres</h3>
-                <div id="genres"></div>
+                <div id="genres">Loading genres...</div>
             </div>
 
             <div class="filter-group">
                 <h3>Release Year</h3>
-                <select id="yearFrom"></select> ➝ <select id="yearTo"></select>
+                <select id="yearFrom">Loading...</select> ➝ <select id="yearTo">Loading...</select>
             </div>
 
             <div class="filter-group">
@@ -55,7 +55,7 @@
 
             <div class="filter-group">
                 <h3>Streaming Services</h3>
-                <div id="streamingServices"></div>
+                <div id="streamingServices">Loading services...</div>
             </div>
 
             <button class="apply-filters" onclick="applyFilters()">Get the List</button>
@@ -71,8 +71,20 @@
         <p>Powered by 2025.4 Martinez Movies | Martinez Lifestyle Shops | Martinez Industries</p>
     </footer>
 
+    <!-- Load config first -->
     <script src="config.js"></script>
+    <!-- Then load the main script -->
     <script src="script.js"></script>
+    <!-- Add debugging -->
+    <script>
+        console.log("Config loaded:", config);
+        document.addEventListener("DOMContentLoaded", () => {
+            console.log("DOM loaded, checking elements:");
+            console.log("Genres div:", document.getElementById("genres"));
+            console.log("Year selects:", document.getElementById("yearFrom"), document.getElementById("yearTo"));
+            console.log("Streaming services:", document.getElementById("streamingServices"));
+        });
+    </script>
 </body>
 </html>
 
