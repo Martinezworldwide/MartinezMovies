@@ -7,9 +7,10 @@ async function fetchMovies() {
     const language = document.getElementById("language").value;
     const genres = [...document.querySelectorAll("#genres .selected")].map(g => g.dataset.id);
     const page = 1;
+    const resultsPerPage = 20; // Increased from default 20
 
     // Build the URL with filters
-    let url = `${config.baseUrl}/discover/${type}?api_key=${config.apiKey}&language=en-US&sort_by=popularity.desc&page=${page}`;
+    let url = `${config.baseUrl}/discover/${type}?api_key=${config.apiKey}&language=en-US&sort_by=popularity.desc&page=${page}&include_adult=false&include_video=false&vote_count.gte=100`;
     if (genres.length) url += `&with_genres=${genres.join(",")}`;
     if (yearFrom && yearTo) url += `&primary_release_year.gte=${yearFrom}&primary_release_year.lte=${yearTo}`;
     if (language !== "any") url += `&with_original_language=${language}`;
@@ -56,7 +57,7 @@ function displayMovies(movies) {
             <div class="rating">
                 <span>⭐ ${movie.vote_average.toFixed(1)}</span>
             </div>
-            <button onclick="addToWatchlist('${movie.id}', '${title}', '${posterPath}')">Add to Watchlist</button>
+            <button onclick="addToWatchlist('${movie.id}', '${title}', '${posterPath}', '${year}')">Add to Watchlist</button>
         `;
         container.appendChild(movieCard);
     });
@@ -148,5 +149,26 @@ document.addEventListener("DOMContentLoaded", () => {
     loadGenres();
     populateYearSelects();
 });
+
+// Add to watchlist function
+function addToWatchlist(id, title, posterPath, year) {
+    let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+    
+    // Check if item already exists
+    if (!watchlist.some(item => item.id === id)) {
+        watchlist.push({
+            id: id,
+            title: title,
+            posterPath: posterPath,
+            year: year,
+            addedDate: new Date().toISOString()
+        });
+        
+        localStorage.setItem('watchlist', JSON.stringify(watchlist));
+        alert('Added to watchlist!');
+    } else {
+        alert('Already in watchlist!');
+    }
+}
 
 

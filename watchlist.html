@@ -1,29 +1,70 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watchlist - Martinez Movies</title>
+    <title>My Watchlist - Martinez Movies</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
         <h1>My Watchlist</h1>
-        <a href="index.html" style="color: #ffcc00;">← Back to Home</a>
+        <p>Your saved movies and TV shows</p>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="#">About</a>
+            <a href="#">Compare Services</a>
+            <a href="#">New, Leaving, Catalogs</a>
+        </nav>
     </header>
 
-    <div class="movies-container" id="watchlist-container">
-        <!-- Movies will be loaded here -->
-    </div>
+    <main>
+        <section id="watchlist">
+            <div id="watchlist-container"></div>
+        </section>
+    </main>
 
     <footer>
-        <p>Powered by Martinez Lifestyle Shops | Martinez Industries</p>
+        <p>Powered by 2025.4 Martinez Movies | Martinez Lifestyle Shops | Martinez Industries</p>
     </footer>
 
-    <script src="script.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", loadWatchlist);
+        // Load watchlist from localStorage
+        function loadWatchlist() {
+            const watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+            const container = document.getElementById('watchlist-container');
+
+            if (watchlist.length === 0) {
+                container.innerHTML = '<p>Your watchlist is empty. Go back to <a href="index.html">browse movies</a>!</p>';
+                return;
+            }
+
+            // Sort by date added (newest first)
+            watchlist.sort((a, b) => new Date(b.addedDate) - new Date(a.addedDate));
+
+            container.innerHTML = watchlist.map(item => `
+                <div class="movie-card">
+                    <img src="${item.posterPath}" alt="${item.title}">
+                    <h3>${item.title} (${item.year})</h3>
+                    <div class="watchlist-actions">
+                        <button onclick="removeFromWatchlist('${item.id}')">Remove</button>
+                        <span class="added-date">Added: ${new Date(item.addedDate).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Remove item from watchlist
+        function removeFromWatchlist(id) {
+            let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+            watchlist = watchlist.filter(item => item.id !== id);
+            localStorage.setItem('watchlist', JSON.stringify(watchlist));
+            loadWatchlist(); // Reload the display
+        }
+
+        // Load watchlist when page loads
+        document.addEventListener('DOMContentLoaded', loadWatchlist);
     </script>
 </body>
 </html>
