@@ -1,5 +1,6 @@
 # Martinez Movies
 
+https://martinezworldwide.github.io/Martinez_Movies
 A modern web application for discovering movies and TV shows, built with vanilla JavaScript and powered by TMDB API.
 
 ## Features
